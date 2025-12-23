@@ -4,3 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+clap = { version = "4.5.4", features = ["derive"] }
+regex = "1"
+
+[lib]
+name = "extract_3gpp_asn1"
+path = "src/lib.rs"
+
+[[bin]]
+name = "extract-3gpp-asn1"
+path = "src/main.rs"
