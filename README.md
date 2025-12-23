@@ -1,0 +1,27 @@
+# extract-3gpp-asn1
+
+Extract 3GPP ASN.1 from a plain text file and print to stdout
+
+## Cross-compilation
+
+## Windows on Linux
+
+```sh
+# Add target
+rustup target add x86_64-pc-windows-gnu
+# Install linker
+#apt update
+apt install -y mingw-w64
+```
+
+`Cargo.toml`
+
+```toml
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+ar = "x86_64-w64-mingw32-gcc-ar"
+```
+
+```sh
+cargo build --release --target x86_64-pc-windows-gnu
+```

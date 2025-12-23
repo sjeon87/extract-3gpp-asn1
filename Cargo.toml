@@ -14,3 +14,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "extract-3gpp-asn1"
 path = "src/main.rs"
+
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+ar = "x86_64-w64-mingw32-gcc-ar"
