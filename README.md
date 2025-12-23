@@ -2,6 +2,19 @@
 
 Extract 3GPP ASN.1 from a plain text file and print to stdout
 
+## Usage
+
+```sh
+Usage: extract-3gpp-asn1 <FILE>
+
+Arguments:
+  <FILE>  The file to process
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
+
 ## Cross-compilation
 
 ## Windows on Linux
