@@ -14,8 +14,9 @@ struct Cli {
 
     /// Comment process level
     /// - 0 (no option given): All comments are preserved
-    /// - 1 (-c): Only need codes and conditions are preserved
-    /// - 2 or higher (-cc or more): All comments are removed
+    /// - 1 (-c): Comments containing 'need' or 'cond' are preserved
+    /// - 2 (-cc or more): Comments containing 'need' or 'cond' are removed (match whole word)
+    /// - 3 or higher (-ccc or more): All comments are removed
     /// Note: This is not syntax-aware but simple pattern-matching
     #[arg(short, long, action = clap::ArgAction::Count, verbatim_doc_comment)]
     comment_process_level: u8,
@@ -42,7 +43,14 @@ fn main() {
             let multiline_removed = remove_multiline_comments(&extracted);
             let delimited_removed = remove_delimited_comments(&multiline_removed);
             let trailing_removed =
-                remove_trailing_comments(&delimited_removed, TagStrategy::Preserve);
+                remove_trailing_comments(&delimited_removed, TagStrategy::PreserveNaive);
+            println!("{}", trailing_removed);
+        }
+        2 => {
+            let multiline_removed = remove_multiline_comments(&extracted);
+            let delimited_removed = remove_delimited_comments(&multiline_removed);
+            let trailing_removed =
+                remove_trailing_comments(&delimited_removed, TagStrategy::PreserveMatchWholeWord);
             println!("{}", trailing_removed);
         }
         _ => {

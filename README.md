@@ -13,11 +13,14 @@ Arguments:
 Options:
   -c, --comment-process-level...  Comment process level
                                   - 0 (no option given): All comments are preserved
-                                  - 1 (-c): Only need codes and conditions are preserved
-                                  - 2 or higher (-cc or more): All comments are removed
+                                  - 1 (-c): Comments containing 'need' or 'cond' are preserved
+                                  - 2 (-cc or more): Comments containing 'need' or 'cond' are removed (match whole word)
+                                  - 3 or higher (-ccc or more): All comments are removed
                                   Note: This is not syntax-aware but simple pattern-matching
   -h, --help                      Print help
   -V, --version                   Print version
+
+Note: Input can be provided via a file path or standard input (stdin) with pipe (|).
 ```
 
 ## Cross-compilation

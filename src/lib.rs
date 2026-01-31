@@ -1,8 +1,9 @@
 use regex::Regex;
 
 pub enum TagStrategy {
-    Preserve,
+    PreserveNaive,
     Remove,
+    PreserveMatchWholeWord,
 }
 
 pub fn extract_asn1_blocks(content: &str) -> String {
@@ -25,9 +26,38 @@ pub fn extract_asn1_blocks(content: &str) -> String {
 pub fn remove_trailing_comments(content: &str, tag_strategy: TagStrategy) -> String {
     let re = Regex::new(r"(?m)--.*?$").unwrap();
     re.replace_all(content, |caps: &regex::Captures| match tag_strategy {
-        TagStrategy::Preserve => {
+        TagStrategy::PreserveNaive => {
             if caps[0].to_lowercase().contains("need") || caps[0].to_lowercase().contains("cond") {
                 caps[0].to_string()
+            } else {
+                "".to_string()
+            }
+        }
+        TagStrategy::PreserveMatchWholeWord => {
+            if let Some(index) = caps[0].to_lowercase().find("need") {
+                let byte1 = caps[0].as_bytes().get(index - 1);
+                let byte2 = caps[0].as_bytes().get(index + 4);
+                if let (Some(c1), Some(c2)) = (byte1, byte2) {
+                    if !c1.is_ascii_alphabetic() && !c2.is_ascii_alphabetic() {
+                        caps[0].to_string()
+                    } else {
+                        "".to_string()
+                    }
+                } else {
+                    "".to_string()
+                }
+            } else if let Some(index) = caps[0].to_lowercase().find("cond") {
+                let byte1 = caps[0].as_bytes().get(index - 1);
+                let byte2 = caps[0].as_bytes().get(index + 4);
+                if let (Some(c1), Some(c2)) = (byte1, byte2) {
+                    if !c1.is_ascii_alphabetic() && !c2.is_ascii_alphabetic() {
+                        caps[0].to_string()
+                    } else {
+                        "".to_string()
+                    }
+                } else {
+                    "".to_string()
+                }
             } else {
                 "".to_string()
             }
@@ -164,8 +194,9 @@ sdfg
 "#;
         assert_eq!(trailing_removed, trailing_expected);
 
-        let tag_preserved = remove_trailing_comments(&delimited_removed, TagStrategy::Preserve);
-        let tag_expected = r#"
+        let tag_preserved_naive =
+            remove_trailing_comments(&delimited_removed, TagStrategy::PreserveNaive);
+        let tag_expected_naive = r#"
 
 
 qwer  asdf
@@ -176,6 +207,24 @@ wert -- this is a false positive need code
 
 sdfg -- this is a false positive condition
 "#;
-        assert_eq!(tag_preserved, tag_expected);
+        assert_eq!(tag_preserved_naive, tag_expected_naive);
+
+        let tag_preserved_match_whole_word =
+            remove_trailing_comments(&delimited_removed, TagStrategy::PreserveMatchWholeWord);
+        let tag_expected_match_whole_word = r#"
+
+
+qwer  asdf
+
+zxcv 
+
+wert -- this is a false positive need code
+
+sdfg 
+"#;
+        assert_eq!(
+            tag_preserved_match_whole_word,
+            tag_expected_match_whole_word
+        );
     }
 }
