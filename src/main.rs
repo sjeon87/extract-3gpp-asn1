@@ -15,7 +15,7 @@ struct Cli {
     /// Comment process level
     /// - 0 (no option given): All comments are preserved
     /// - 1 (-c): Comments containing 'need' or 'cond' are preserved
-    /// - 2 (-cc or more): Comments containing 'need' or 'cond' are removed (match whole word)
+    /// - 2 (-cc): Comments containing 'need' or 'cond' are preserved (match whole word)
     /// - 3 or higher (-ccc or more): All comments are removed
     /// Note: This is not syntax-aware but simple pattern-matching
     #[arg(short, long, action = clap::ArgAction::Count, verbatim_doc_comment)]
