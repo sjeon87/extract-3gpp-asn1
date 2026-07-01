@@ -1,8 +1,11 @@
 use clap::{CommandFactory, Parser};
+use docx_rs::{DocumentChild, ParagraphChild, RunChild, read_docx};
 use extract_3gpp_asn1::{
     TagStrategy, extract_asn1_blocks, remove_delimited_comments, remove_multiline_comments,
     remove_trailing_comments,
 };
+use std::ffi::OsStr;
+use std::fs::File;
 use std::io::{IsTerminal, Read};
 
 #[derive(Parser)]
@@ -31,7 +34,44 @@ fn main() {
             .expect("could not read stdin");
         buffer
     } else if let Some(path) = cli.path {
-        std::fs::read_to_string(path).expect("could not read file")
+        if path.extension() == Some(OsStr::new("docx")) {
+            let mut file = File::open(path).expect("could not read file");
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf).unwrap();
+            let docx = read_docx(&buf).unwrap();
+            docx.document
+                .children
+                .iter()
+                .filter_map(|child| match child {
+                    DocumentChild::Paragraph(p) => Some(
+                        p.children
+                            .iter()
+                            .filter_map(|p_child| match p_child {
+                                ParagraphChild::Run(r) => Some(
+                                    r.children
+                                        .iter()
+                                        .filter_map(|r_child| match r_child {
+                                            RunChild::Text(t) => Some(t.text.as_str()),
+                                            RunChild::Tab(_t) => Some("\t"),
+                                            RunChild::PTab(_t) => Some("\t"),
+                                            RunChild::Break(_b) => Some("\n"),
+                                            _ => None,
+                                        })
+                                        .collect::<Vec<&str>>()
+                                        .join(""),
+                                ),
+                                _ => None,
+                            })
+                            .collect::<Vec<String>>()
+                            .join(""),
+                    ),
+                    _ => None,
+                })
+                .collect::<Vec<String>>()
+                .join("\n")
+        } else {
+            std::fs::read_to_string(path).expect("could not read file")
+        }
     } else {
         let _ = Cli::command().print_help();
         std::process::exit(1);
