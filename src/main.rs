@@ -1,5 +1,5 @@
 use clap::{CommandFactory, Parser};
-use docx_rs::{DocumentChild, read_docx};
+use docx_rs::{DocumentChild, ParagraphChild, RunChild, read_docx};
 use extract_3gpp_asn1::{
     TagStrategy, extract_asn1_blocks, remove_delimited_comments, remove_multiline_comments,
     remove_trailing_comments,
@@ -43,7 +43,28 @@ fn main() {
                 .children
                 .iter()
                 .filter_map(|child| match child {
-                    DocumentChild::Paragraph(p) => Some(p.raw_text()),
+                    DocumentChild::Paragraph(p) => Some(
+                        p.children
+                            .iter()
+                            .filter_map(|p_child| match p_child {
+                                ParagraphChild::Run(r) => Some(
+                                    r.children
+                                        .iter()
+                                        .filter_map(|r_child| match r_child {
+                                            RunChild::Text(t) => Some(t.text.as_str()),
+                                            RunChild::Tab(_t) => Some("\t"),
+                                            RunChild::PTab(_t) => Some("\t"),
+                                            RunChild::Break(_b) => Some("\n"),
+                                            _ => None,
+                                        })
+                                        .collect::<Vec<&str>>()
+                                        .join(""),
+                                ),
+                                _ => None,
+                            })
+                            .collect::<Vec<String>>()
+                            .join(""),
+                    ),
                     _ => None,
                 })
                 .collect::<Vec<String>>()
