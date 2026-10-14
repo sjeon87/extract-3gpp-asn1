@@ -25,7 +25,15 @@ pub fn extract_asn1_blocks(content: &str) -> String {
 
 pub fn remove_trailing_comments(content: &str, tag_strategy: TagStrategy) -> String {
     let re = Regex::new(r"(?m)--.*?$").unwrap();
-    re.replace_all(content, |caps: &regex::Captures| match tag_strategy {
+    let excluded_start = Regex::new(r"(?i)^--[ \t]*?(the|max|min|high|low)").unwrap();
+    re.replace_all(content, |caps: &regex::Captures| {
+        if !matches!(tag_strategy, TagStrategy::Remove)
+            && excluded_start.is_match(&caps[0])
+        {
+            return String::new();
+        }
+
+        match tag_strategy {
         TagStrategy::PreserveNaive => {
             if caps[0].to_lowercase().contains("need") || caps[0].to_lowercase().contains("cond") {
                 caps[0].to_string()
@@ -63,6 +71,7 @@ pub fn remove_trailing_comments(content: &str, tag_strategy: TagStrategy) -> Str
             }
         }
         TagStrategy::Remove => "".to_string(),
+        }
     })
     .to_string()
 }
@@ -226,5 +235,15 @@ sdfg
             tag_preserved_match_whole_word,
             tag_expected_match_whole_word
         );
+    }
+
+    #[test]
+    fn test_preserve_modes_remove_excluded_comment_starts() {
+        let input = "a -- the value\nb --\tMAX value\nc --min value\nd -- high value\ne -- LOW value\nf -- something else\n";
+
+        for strategy in [TagStrategy::PreserveNaive, TagStrategy::PreserveMatchWholeWord] {
+            let output = remove_trailing_comments(input, strategy);
+            assert_eq!(output, "a \nb \nc \nd \ne \nf \n");
+        }
     }
 }
